@@ -4,8 +4,8 @@ CREATE OR REPLACE FUNCTION sqlserver.ft_cabecera_viatico_ime (
   p_tabla varchar,
   p_transaccion varchar
 )
-  RETURNS varchar AS
-  $body$
+RETURNS varchar AS
+$body$
 /**************************************************************************
  SISTEMA:		Sistemas en Sql Server
  FUNCION: 		sqlserver.ft_cabecera_viatico_ime
@@ -36,6 +36,9 @@ DECLARE
     v_respu					varchar;
     v_conexion				varchar;
     v_resbool				boolean;
+    v_id_int_comprobante_ajuste	integer;
+    v_tipo_ajuste			varchar;
+    v_id_estado_wf			integer;
 			    
 BEGIN
 
@@ -61,6 +64,19 @@ BEGIN
             	raise exception 'No se puede generar el comprobante ya que el empleado no tiene un usuario en el ERP';
             end if;
             
+            if (pxp.f_existe_parametro(p_tabla,'id_int_comprobante_ajuste')) then
+            	v_id_int_comprobante_ajuste = v_parametros.id_int_comprobante_ajuste;
+                if (v_id_int_comprobante_ajuste is not null) then
+                	select c.id_estado_wf into v_id_estado_wf
+                    from conta.tint_comprobante c
+                    where c.id_int_comprobante = v_id_int_comprobante_ajuste;
+                end if;
+            end if;
+            
+            if (pxp.f_existe_parametro(p_tabla,'tipo_ajuste')) then
+            	v_tipo_ajuste = v_parametros.tipo_ajuste;
+            end if;
+            
             
         	--Sentencia de la insercion
         	insert into sqlserver.tcabecera_viatico(
@@ -70,7 +86,9 @@ BEGIN
 			acreedor,
 			id_usuario_reg,
             fecha,
-            nro_sigma
+            nro_sigma,
+            id_int_comprobante_ajuste,
+            tipo_ajuste
 			
           	) values(
 			v_parametros.id_funcionario,			
@@ -79,7 +97,9 @@ BEGIN
 			v_parametros.acreedor,
 			v_id_usuario_reg,
             v_parametros.fecha,
-            v_parametros.nro_sigma		
+            v_parametros.nro_sigma,
+            v_id_int_comprobante_ajuste,
+            v_tipo_ajuste		
 			
 			)RETURNING id_cabecera_viatico into v_id_cabecera_viatico;
             
@@ -116,9 +136,15 @@ BEGIN
                   v_registros.glosa
                 );
             end loop;
-            
-            v_id_int_comprobante =   conta.f_gen_comprobante (v_id_cabecera_viatico,'DEVPAGVIA',NULL,v_id_usuario_reg,NULL,NULL, NULL); 
-			
+            if ( v_tipo_ajuste is not null and v_tipo_ajuste = 'disminucion') then
+            	v_id_int_comprobante =   conta.f_gen_comprobante (v_id_cabecera_viatico,'AJUDISVIA',v_id_estado_wf,v_id_usuario_reg,NULL,NULL, NULL); 
+			else
+            	if (v_tipo_ajuste is not null ) then
+                	v_id_int_comprobante =   conta.f_gen_comprobante (v_id_cabecera_viatico,'DEVPAGVIA',v_id_estado_wf,v_id_usuario_reg,NULL,NULL, NULL);
+                else
+            		v_id_int_comprobante =   conta.f_gen_comprobante (v_id_cabecera_viatico,'DEVPAGVIA',NULL,v_id_usuario_reg,NULL,NULL, NULL); 
+            	end if;
+            end if;
                         
              
              

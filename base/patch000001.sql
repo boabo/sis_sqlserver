@@ -59,3 +59,16 @@ CREATE TYPE sqlserver.detalle_viatico AS (
 );
 
 /************************************F-SCP-JRR-SQLSERVER-0-13/05/2016*************************************************/
+
+/************************************I-SCP-JRR-SQLSERVER-0-03/04/2017*************************************************/
+
+ALTER TABLE sqlserver.tcabecera_viatico
+  ADD COLUMN id_int_comprobante_ajuste INTEGER;
+
+ALTER TABLE sqlserver.tcabecera_viatico
+  ADD COLUMN tipo_ajuste VARCHAR(20);
+
+COMMENT ON COLUMN sqlserver.tcabecera_viatico.tipo_ajuste
+IS 'incremento o disminucion';
+
+/************************************F-SCP-JRR-SQLSERVER-0-03/04/2017*************************************************/
