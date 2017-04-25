@@ -75,7 +75,7 @@ AS
   FROM sqlserver.tcabecera_viatico cv
        JOIN param.tdepto d ON d.codigo::text = 'CON'::text;
        
-CREATE VIEW sqlserver.vdetalle_viatico_credito (
+CREATE OR REPLACE VIEW sqlserver.vdetalle_viatico_credito(
     id_detalle_viatico,
     id_cabecera_viatico,
     monto,
@@ -83,111 +83,181 @@ CREATE VIEW sqlserver.vdetalle_viatico_credito (
     id_auxiliar,
     id_partida,
     forma_pago,
-    acreedor)
+    acreedor,
+    glosa)
 AS
-SELECT dv.id_detalle_viatico,
-    cv.id_cabecera_viatico,
-    dv.monto,
-    (
-    SELECT f_get_config_relacion_contable.ps_id_cuenta
-    FROM conta.f_get_config_relacion_contable(
-                CASE
-                    WHEN dv.tipo_credito::text = 'banco'::text THEN 'BANVIAOPE'::text
-                    WHEN dv.tipo_credito::text = 'retencion'::text AND
-                        cv.tipo_viatico::text = 'operativo'::text THEN 'IVAVIAOPE'::text
-                    WHEN dv.tipo_credito::text = 'retencion'::text AND
-                        cv.tipo_viatico::text = 'administrativo'::text THEN 'IVAVIAADM'::text
-                    WHEN dv.tipo_credito::text = 'retencion_aeropuerto'::text
-                        THEN 'AEROVIAADM'::text
-                    WHEN dv.tipo_credito::text = 'retencion_transitoria'::text
-                        THEN 'TRANVIAADM'::text
-                    ELSE NULL::text
-                END::character varying, cv.id_gestion_contable)
-                    f_get_config_relacion_contable(ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo, ps_nombre_tipo_relacion)
-    ) AS id_cuenta,
-        CASE
-            WHEN dv.codigo_auxiliar IS NULL THEN (
-    SELECT f_get_config_relacion_contable.ps_id_auxiliar
-    FROM conta.f_get_config_relacion_contable(
-                    CASE
-                        WHEN dv.tipo_credito::text = 'banco'::text THEN
-                            'BANVIAOPE'::text
-                        WHEN dv.tipo_credito::text = 'retencion'::text AND
-                            cv.tipo_viatico::text = 'operativo'::text THEN 'IVAVIAOPE'::text
-                        WHEN dv.tipo_credito::text = 'retencion'::text AND
-                            cv.tipo_viatico::text = 'administrativo'::text THEN 'IVAVIAADM'::text
-                        WHEN dv.tipo_credito::text =
-                            'retencion_aeropuerto'::text THEN 'AEROVIAADM'::text
-                        WHEN dv.tipo_credito::text =
-                            'retencion_transitoria'::text THEN 'TRANVIAADM'::text
-                        ELSE NULL::text
-                    END::character varying, cv.id_gestion_contable)
-                        f_get_config_relacion_contable(ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo, ps_nombre_tipo_relacion)
-    )
-            ELSE (
-    SELECT a.id_auxiliar
-    FROM conta.tauxiliar a
-    WHERE a.codigo_auxiliar::text = dv.codigo_auxiliar::text
-    )
-        END AS id_auxiliar,
-    (
-    SELECT f_get_config_relacion_contable.ps_id_partida
-    FROM conta.f_get_config_relacion_contable(
-                CASE
-                    WHEN dv.tipo_credito::text = 'banco'::text THEN 'BANVIAOPE'::text
-                    WHEN dv.tipo_credito::text = 'retencion'::text AND
-                        cv.tipo_viatico::text = 'operativo'::text THEN 'IVAVIAOPE'::text
-                    WHEN dv.tipo_credito::text = 'retencion'::text AND
-                        cv.tipo_viatico::text = 'administrativo'::text THEN 'IVAVIAADM'::text
-                    WHEN dv.tipo_credito::text = 'retencion_aeropuerto'::text
-                        THEN 'AEROVIAADM'::text
-                    WHEN dv.tipo_credito::text = 'retencion_transitoria'::text
-                        THEN 'TRANVIAADM'::text
-                    ELSE NULL::text
-                END::character varying, cv.id_gestion_contable)
-                    f_get_config_relacion_contable(ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo, ps_nombre_tipo_relacion)
-    ) AS id_partida,
-    dv.forma_pago,
-    dv.acreedor
-FROM sqlserver.tdetalle_viatico dv
-   JOIN sqlserver.vcabecera_viatico cv ON cv.id_cabecera_viatico =
-       dv.id_cabecera_viatico
-WHERE dv.tipo_transaccion::text = 'credito'::text;
+  SELECT dv.id_detalle_viatico,
+         cv.id_cabecera_viatico,
+         dv.monto,
+         (
+           SELECT f_get_config_relacion_contable.ps_id_cuenta
+           FROM conta.f_get_config_relacion_contable(CASE
+                                                       WHEN dv.tipo_credito::
+                                                         text = 'banco'::text
+                                                         THEN 'BANVIAOPE'::text
+                                                       WHEN dv.tipo_credito::
+                                                         text = 'retencion'::
+                                                         text AND
+                                                         cv.tipo_viatico::text =
+                                                         'operativo'::text THEN
+                                                         'IVAVIAOPE'::text
+                                                       WHEN dv.tipo_credito::
+                                                         text = 'retencion'::
+                                                         text AND
+                                                         cv.tipo_viatico::text =
+                                                         'administrativo'::text
+                                                         THEN 'IVAVIAADM'::text
+                                                       WHEN dv.tipo_credito::
+                                                         text =
+                                                         'retencion_aeropuerto'
+                                                         ::text THEN
+                                                         'AEROVIAADM'::text
+                                                       WHEN dv.tipo_credito::
+                                                         text =
+                                                         'retencion_transitoria'
+                                                         ::text THEN
+                                                         'TRANVIAADM'::text
+                                                       ELSE NULL::text
+                                                     END::character varying,
+                                                       cv.id_gestion_contable)
+                                                       f_get_config_relacion_contable
+                                                       (ps_id_cuenta,
+                                                       ps_id_auxiliar,
+                                                       ps_id_partida,
+                                                       ps_id_centro_costo,
+                                                       ps_nombre_tipo_relacion)
+         ) AS id_cuenta,
+         CASE
+           WHEN dv.codigo_auxiliar IS NULL THEN (
+                                                  SELECT
+                                                    f_get_config_relacion_contable.ps_id_auxiliar
+                                                  FROM
+                                                    conta.f_get_config_relacion_contable
+                                                    (CASE
+                                                       WHEN dv.tipo_credito::
+                                                         text = 'banco'::text
+                                                         THEN 'BANVIAOPE'::text
+                                                       WHEN dv.tipo_credito::
+                                                         text = 'retencion'::
+                                                         text AND
+                                                         cv.tipo_viatico::text =
+                                                         'operativo'::text THEN
+                                                         'IVAVIAOPE'::text
+                                                       WHEN dv.tipo_credito::
+                                                         text = 'retencion'::
+                                                         text AND
+                                                         cv.tipo_viatico::text =
+                                                         'administrativo'::text
+                                                         THEN 'IVAVIAADM'::text
+                                                       WHEN dv.tipo_credito::
+                                                         text =
+                                                         'retencion_aeropuerto'
+                                                         ::text THEN
+                                                         'AEROVIAADM'::text
+                                                       WHEN dv.tipo_credito::
+                                                         text =
+                                                         'retencion_transitoria'
+                                                         ::text THEN
+                                                         'TRANVIAADM'::text
+                                                       ELSE NULL::text
+                                                     END::character varying,
+                                                       cv.id_gestion_contable)
+                                                       f_get_config_relacion_contable
+                                                       (ps_id_cuenta,
+                                                       ps_id_auxiliar,
+                                                       ps_id_partida,
+                                                       ps_id_centro_costo,
+                                                       ps_nombre_tipo_relacion)
+         )
+           ELSE 
+         (
+           SELECT a.id_auxiliar
+           FROM conta.tauxiliar a
+           WHERE a.codigo_auxiliar::text = dv.codigo_auxiliar::text
+         )
+         END AS id_auxiliar,
+         (
+           SELECT f_get_config_relacion_contable.ps_id_partida
+           FROM conta.f_get_config_relacion_contable(CASE
+                                                       WHEN dv.tipo_credito::
+                                                         text = 'banco'::text
+                                                         THEN 'BANVIAOPE'::text
+                                                       WHEN dv.tipo_credito::
+                                                         text = 'retencion'::
+                                                         text AND
+                                                         cv.tipo_viatico::text =
+                                                         'operativo'::text THEN
+                                                         'IVAVIAOPE'::text
+                                                       WHEN dv.tipo_credito::
+                                                         text = 'retencion'::
+                                                         text AND
+                                                         cv.tipo_viatico::text =
+                                                         'administrativo'::text
+                                                         THEN 'IVAVIAADM'::text
+                                                       WHEN dv.tipo_credito::
+                                                         text =
+                                                         'retencion_aeropuerto'
+                                                         ::text THEN
+                                                         'AEROVIAADM'::text
+                                                       WHEN dv.tipo_credito::
+                                                         text =
+                                                         'retencion_transitoria'
+                                                         ::text THEN
+                                                         'TRANVIAADM'::text
+                                                       ELSE NULL::text
+                                                     END::character varying,
+                                                       cv.id_gestion_contable)
+                                                       f_get_config_relacion_contable
+                                                       (ps_id_cuenta,
+                                                       ps_id_auxiliar,
+                                                       ps_id_partida,
+                                                       ps_id_centro_costo,
+                                                       ps_nombre_tipo_relacion)
+         ) AS id_partida,
+         dv.forma_pago,
+         dv.acreedor,
+         dv.glosa
+  FROM sqlserver.tdetalle_viatico dv
+       JOIN sqlserver.vcabecera_viatico cv ON cv.id_cabecera_viatico =
+         dv.id_cabecera_viatico
+  WHERE dv.tipo_transaccion::text = 'credito'::text;
 
-CREATE VIEW sqlserver.vdetalle_viatico_debito (
+CREATE OR REPLACE VIEW sqlserver.vdetalle_viatico_debito(
     id_detalle_viatico,
     id_cabecera_viatico,
     monto,
     id_presupuesto,
-    id_concepto_ingas)
+    id_concepto_ingas,
+    glosa)
 AS
-SELECT dv.id_detalle_viatico,
-    cv.id_cabecera_viatico,
-    dv.monto,
-        CASE
-            WHEN dv.id_centro_costo IS NOT NULL THEN dv.id_centro_costo
-            ELSE presup.id_centro_costo
-        END AS id_presupuesto,
-        CASE
-            WHEN dv.tipo_viaje::text = 'nacional'::text AND
-                cv.tipo_viatico::text = 'operativo'::text THEN 4814
-            WHEN dv.tipo_viaje::text = 'internacional'::text AND
-                cv.tipo_viatico::text = 'operativo'::text THEN 4815
-            WHEN dv.tipo_viaje::text = 'nacional'::text AND
-                cv.tipo_viatico::text = 'administrativo'::text THEN 1658
-            WHEN dv.tipo_viaje::text = 'internacional'::text AND
-                cv.tipo_viatico::text = 'administrativo'::text THEN 1662
-            ELSE NULL::integer
-        END AS id_concepto_ingas
-FROM sqlserver.tdetalle_viatico dv
-   JOIN sqlserver.vcabecera_viatico cv ON cv.id_cabecera_viatico =
-       dv.id_cabecera_viatico
-   LEFT JOIN param.tcentro_costo cc ON cc.id_uo = dv.id_uo AND cc.id_gestion =
-       cv.id_gestion_contable
-   LEFT JOIN pre.tpresupuesto presup ON presup.id_presupuesto =
-       cc.id_centro_costo AND presup.tipo_pres::text = '2'::text
-WHERE dv.tipo_transaccion::text = 'debito'::text AND presup.id_presupuesto =
-    cc.id_centro_costo;
+  SELECT dv.id_detalle_viatico,
+         cv.id_cabecera_viatico,
+         dv.monto,
+         CASE
+           WHEN dv.id_centro_costo IS NOT NULL THEN dv.id_centro_costo
+           ELSE presup.id_centro_costo
+         END AS id_presupuesto,
+         CASE
+           WHEN dv.tipo_viaje::text = 'nacional'::text AND cv.tipo_viatico::text
+             = 'operativo'::text THEN 4814
+           WHEN dv.tipo_viaje::text = 'internacional'::text AND cv.tipo_viatico
+             ::text = 'operativo'::text THEN 4815
+           WHEN dv.tipo_viaje::text = 'nacional'::text AND cv.tipo_viatico::text
+             = 'administrativo'::text THEN 1658
+           WHEN dv.tipo_viaje::text = 'internacional'::text AND cv.tipo_viatico
+             ::text = 'administrativo'::text THEN 1662
+           ELSE NULL::integer
+         END AS id_concepto_ingas,
+         dv.glosa
+  FROM sqlserver.tdetalle_viatico dv
+       JOIN sqlserver.vcabecera_viatico cv ON cv.id_cabecera_viatico =
+         dv.id_cabecera_viatico
+       LEFT JOIN param.tcentro_costo cc ON cc.id_uo = dv.id_uo AND cc.id_gestion
+         = cv.id_gestion_contable OR cc.id_centro_costo = dv.id_centro_costo
+       LEFT JOIN pre.tpresupuesto presup ON presup.id_presupuesto =
+         cc.id_centro_costo AND presup.tipo_pres::text = '2'::text
+  WHERE dv.tipo_transaccion::text = 'debito'::text AND
+        presup.id_presupuesto = cc.id_centro_costo;
     
 
 
