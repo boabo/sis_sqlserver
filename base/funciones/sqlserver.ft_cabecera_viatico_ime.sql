@@ -136,15 +136,13 @@ BEGIN
                   v_registros.glosa
                 );
             end loop;
-            if ( v_tipo_ajuste is not null and v_tipo_ajuste = 'disminucion') then
-            	v_id_int_comprobante =   conta.f_gen_comprobante (v_id_cabecera_viatico,'AJUDISVIA',v_id_estado_wf,v_id_usuario_reg,NULL,NULL, NULL); 
-			else
-            	if (v_tipo_ajuste is not null ) then
-                	v_id_int_comprobante =   conta.f_gen_comprobante (v_id_cabecera_viatico,'DEVPAGVIA',v_id_estado_wf,v_id_usuario_reg,NULL,NULL, NULL);
-                else
-            		v_id_int_comprobante =   conta.f_gen_comprobante (v_id_cabecera_viatico,'DEVPAGVIA',NULL,v_id_usuario_reg,NULL,NULL, NULL); 
-            	end if;
+           
+            if (pxp.f_existe_parametro(p_tabla,'id_int_comprobante_ajuste')) then
+                v_id_int_comprobante =   conta.f_gen_comprobante (v_id_cabecera_viatico,'DEVPAGVIA',v_id_estado_wf,v_id_usuario_reg,NULL,NULL, NULL);
+            else
+                v_id_int_comprobante =   conta.f_gen_comprobante (v_id_cabecera_viatico,'DEVPAGVIA',NULL,v_id_usuario_reg,NULL,NULL, NULL); 
             end if;
+            
                         
              
              
@@ -181,7 +179,7 @@ BEGIN
             	raise exception 'No se puede generar el comprobante ya que el empleado no tiene un usuario en el ERP';
             end if;
             v_resbool = conta.f_igualar_cbte(v_parametros.id_int_comprobante,v_id_usuario_reg,false);
-			v_respu = conta.f_validar_cbte(v_id_usuario_reg,NULL,NULL,v_parametros.id_int_comprobante,'si');
+			v_respu = conta.f_validar_cbte(v_id_usuario_reg,NULL,NULL,v_parametros.id_int_comprobante,'si','pxp',NULL,false);
                
 			--Definicion de la respuesta
             v_resp = pxp.f_agrega_clave(v_resp,'mensaje','Comprobante validado'); 
