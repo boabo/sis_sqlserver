@@ -625,3 +625,114 @@ AS
   WHERE dv.tipo_transaccion::text = 'credito'::text;
 
 /************************************F-DEP-JRR-SQLSERVER-0-01/08/2017*************************************************/
+
+/************************************I-DEP-JRR-SQLSERVER-0-03/08/2017*************************************************/
+
+CREATE OR REPLACE VIEW sqlserver.vdetalle_viatico_credito(
+    id_detalle_viatico,
+    id_cabecera_viatico,
+    monto,
+    id_presupuesto,
+    id_cuenta,
+    id_auxiliar,
+    id_partida,
+    forma_pago,
+    acreedor,
+    glosa)
+AS
+  SELECT dv.id_detalle_viatico,
+         cv.id_cabecera_viatico,
+         dv.monto,
+         CASE
+           WHEN dv.tipo_credito::text = 'viatico'::text THEN
+             sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo,
+             cv.id_gestion_contable)
+           ELSE cv.id_centro_costo_depto
+         END AS id_presupuesto,
+         (
+           SELECT f_get_config_relacion_contable.ps_id_cuenta
+           FROM conta.f_get_config_relacion_contable(
+             sqlserver.f_get_codigo_relacion(dv.tipo_credito, cv.tipo_viatico),
+             cv.id_gestion_contable, sqlserver.f_get_concepto(dv.tipo_credito,
+             dv.tipo_viaje, cv.tipo_viatico, dv.codigo_auxiliar),
+             sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo,
+             cv.id_gestion_contable)) f_get_config_relacion_contable(
+             ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo,
+             ps_nombre_tipo_relacion)
+         ) AS id_cuenta,
+         (
+           SELECT f_get_config_relacion_contable.ps_id_auxiliar
+           FROM conta.f_get_config_relacion_contable(
+             sqlserver.f_get_codigo_relacion(dv.tipo_credito, cv.tipo_viatico),
+             cv.id_gestion_contable, sqlserver.f_get_concepto(dv.tipo_credito,
+             dv.tipo_viaje, cv.tipo_viatico, dv.codigo_auxiliar),
+             sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo,
+             cv.id_gestion_contable)) f_get_config_relacion_contable(
+             ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo,
+             ps_nombre_tipo_relacion)
+         ) AS id_auxiliar,
+         (
+           SELECT f_get_config_relacion_contable.ps_id_partida
+           FROM conta.f_get_config_relacion_contable(
+             sqlserver.f_get_codigo_relacion(dv.tipo_credito, cv.tipo_viatico),
+             cv.id_gestion_contable, sqlserver.f_get_concepto(dv.tipo_credito,
+             dv.tipo_viaje, cv.tipo_viatico, dv.codigo_auxiliar),
+             sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo,
+             cv.id_gestion_contable)) f_get_config_relacion_contable(
+             ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo,
+             ps_nombre_tipo_relacion)
+         ) AS id_partida,
+         dv.forma_pago,
+         dv.acreedor,
+         dv.glosa
+  FROM sqlserver.tdetalle_viatico dv
+       JOIN sqlserver.vcabecera_viatico cv ON cv.id_cabecera_viatico =
+         dv.id_cabecera_viatico
+  WHERE dv.tipo_transaccion::text = 'credito'::text;
+
+
+CREATE VIEW sqlserver.vdetalle_viatico_debito (
+    id_detalle_viatico,
+    id_cabecera_viatico,
+    monto,
+    id_presupuesto,
+    id_cuenta,
+    id_auxiliar,
+    id_partida,
+    forma_pago,
+    acreedor,
+    glosa)
+AS
+SELECT dv.id_detalle_viatico,
+    cv.id_cabecera_viatico,
+    dv.monto,
+        CASE
+            WHEN dv.tipo_credito::text = 'viatico'::text THEN
+                sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo, cv.id_gestion_contable)
+            ELSE cv.id_centro_costo_depto
+        END AS id_presupuesto,
+    (
+    SELECT f_get_config_relacion_contable.ps_id_cuenta
+    FROM conta.f_get_config_relacion_contable(sqlserver.f_get_codigo_relacion(dv.tipo_credito,
+        cv.tipo_viatico), cv.id_gestion_contable, sqlserver.f_get_concepto(dv.tipo_credito, dv.tipo_viaje, cv.tipo_viatico, dv.codigo_auxiliar), sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo, cv.id_gestion_contable)) f_get_config_relacion_contable(ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo, ps_nombre_tipo_relacion)
+    ) AS id_cuenta,
+    (
+    SELECT f_get_config_relacion_contable.ps_id_auxiliar
+    FROM conta.f_get_config_relacion_contable(sqlserver.f_get_codigo_relacion(dv.tipo_credito,
+        cv.tipo_viatico), cv.id_gestion_contable, sqlserver.f_get_concepto(dv.tipo_credito, dv.tipo_viaje, cv.tipo_viatico, dv.codigo_auxiliar), sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo, cv.id_gestion_contable)) f_get_config_relacion_contable(ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo, ps_nombre_tipo_relacion)
+    ) AS id_auxiliar,
+    (
+    SELECT f_get_config_relacion_contable.ps_id_partida
+    FROM conta.f_get_config_relacion_contable(sqlserver.f_get_codigo_relacion(dv.tipo_credito,
+        cv.tipo_viatico), cv.id_gestion_contable, sqlserver.f_get_concepto(dv.tipo_credito, dv.tipo_viaje, cv.tipo_viatico, dv.codigo_auxiliar), sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo, cv.id_gestion_contable)) f_get_config_relacion_contable(ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo, ps_nombre_tipo_relacion)
+    ) AS id_partida,
+    dv.forma_pago,
+    dv.acreedor,
+    dv.glosa
+FROM sqlserver.tdetalle_viatico dv
+     JOIN sqlserver.vcabecera_viatico cv ON cv.id_cabecera_viatico =
+         dv.id_cabecera_viatico
+WHERE dv.tipo_transaccion::text = 'debito'::text;
+
+
+/************************************F-DEP-JRR-SQLSERVER-0-03/08/2017*************************************************/
