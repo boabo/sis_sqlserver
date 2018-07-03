@@ -143,7 +143,9 @@ BEGIN
                 v_id_int_comprobante =   conta.f_gen_comprobante (v_id_cabecera_viatico,'DEVPAGVIA',NULL,v_id_usuario_reg,NULL,NULL, NULL); 
             end if;
             
-                        
+			UPDATE conta.tint_comprobante set
+            c31=v_parametros.nro_sigma
+            where id_int_comprobante = v_id_int_comprobante;                        
              
              
             update sqlserver.tcabecera_viatico set 
