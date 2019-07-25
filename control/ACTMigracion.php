@@ -45,7 +45,7 @@ class ACTMigracion extends ACTbase{
         $this->res->imprimirRespuesta($this->res->generarJson());
     }
 
-    function dispararControlMigracion(){
+    function dispararControlMigracion(){ //var_dump($this->objParam->getParametro('fecha'));exit;
         $this->objFunc=$this->create('MODMigracion');
         $this->res=$this->objFunc->listarMigracionPendiente($this->objParam);
         $this->res->imprimirRespuesta($this->res->generarJson());

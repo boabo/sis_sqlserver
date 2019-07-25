@@ -73,7 +73,7 @@ BEGIN
 
     	end if;
 
-    /*elsif(TG_OP ='UPDATE' )then
+    elsif(TG_OP ='UPDATE' )then
     	if(new.estado_reg = 'inactivo')then
 
     		v_consulta =  'exec Ende_Funcionario ''DEL'', '''||new.estado_reg||''' null, null, null,
@@ -98,7 +98,7 @@ BEGIN
             coalesce(''''||v_record_emp.direccion||'''','null')||', '||coalesce(''''||v_record_emp.lugar_nac||'''','null')||', '||new.id_funcionario||', '''||
             coalesce(v_record_emp.discapacitado,'')||''', '||coalesce(''''||v_record_emp.carnet_discapacitado||'''','null')||';';
 
-        end if;	*/
+        end if;
 	end if;
 
 

@@ -15,14 +15,14 @@ BEGIN
     select tu.id_usuario
     into v_id_usuario
     from segu.tusuario tu
-    where tu.cuenta = (string_to_array(current_user,'_'))[3];
+    where tu.cuenta = (string_to_array(current_user,'_'))[2];
 
     SELECT tf.id_funcionario
     INTO v_id_funcionario
     FROM segu.tusuario tu
     INNER JOIN orga.tfuncionario tf on tf.id_persona = tu.id_persona
     WHERE tu.id_usuario = v_id_usuario;
-
+	--RAISE EXCEPTION 'v_id_funcionario: %, %, %, %', v_id_funcionario, TG_OP, new.estado_reg, new.fecha_documento_asignacion;
     if(TG_OP = 'INSERT')then
 		-- EXCEPTION 'LLEGA';
     	v_consulta =  'exec Ende_HistorialCargo ''INS'', '||new.id_uo_funcionario||', '||new.id_funcionario||', '||
@@ -34,8 +34,8 @@ BEGIN
         	v_consulta =  'exec Ende_HistorialCargo ''DEL'', '||old.id_uo_funcionario||', ''null'', ''null'', ''null'', ''null'', ''null'', ''null'', ''null'', ''null'' ;';
         else
     		v_consulta =  'exec Ende_HistorialCargo ''UPD'', '||new.id_uo_funcionario||', '||new.id_funcionario||', '||
-        			  	  new.id_cargo||', '''||new.nro_documento_asignacion||''', '||''||new.fecha_asignacion||','||
-                      	  new.fecha_finalizacion||','||v_id_funcionario||','||new.fecha_documento_asignacion||', ''activo'';';
+        			  	  new.id_cargo||', '''||new.nro_documento_asignacion||''', '''||old.fecha_asignacion||''', '''||
+                      	  new.fecha_finalizacion||''', '||v_id_funcionario||', '''||coalesce(new.fecha_documento_asignacion::varchar,'')||''', ''activo'';';
     	end if;
 	end if;
 

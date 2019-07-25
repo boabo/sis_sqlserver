@@ -7,11 +7,12 @@ CREATE OR REPLACE FUNCTION sqlserver.f_get_concepto (
 RETURNS integer AS
 $body$
 DECLARE
-
+V_CONTA INTEGER = -1;
 BEGIN
+
   return (CASE
-  			WHEN p_tipo_credito != 'viatico' then
-            	NULL
+  		   WHEN p_tipo_credito != 'viatico' then
+		   	NULL
            WHEN p_tipo_viaje::text = 'nacional'::text AND p_tipo_viatico::text
              = 'operativo'::text THEN 4814
            WHEN p_tipo_viaje::text = 'internacional'::text AND p_tipo_viatico
@@ -24,9 +25,9 @@ BEGIN
              = 'administrativo'::text and  p_codigo_auxiliar = 'entrenamiento' THEN 2914
            WHEN p_tipo_viaje::text = 'internacional'::text AND p_tipo_viatico
              ::text = 'administrativo'::text THEN 4873
-           ELSE NULL
+           ELSE  NULL
            END)::INTEGER;
-
+RETURN 0::INTEGER;
 END;
 $body$
 LANGUAGE 'plpgsql'

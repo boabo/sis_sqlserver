@@ -159,6 +159,10 @@ class MODMigracion extends MODbase{
         $param_conex = array();
         $conexion = '';
 
+        if(($datos->datos) == null){
+            return $this->respuesta;
+        }
+
         //recorremos los registros
         foreach ($datos->datos as $data){
             if($data->tipo_conexion  != 'informix') {
