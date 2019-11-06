@@ -77,7 +77,7 @@ BEGIN
 						usu1.cuenta as usr_reg,
 						usu2.cuenta as usr_mod
 						from sqlserver.tmigracion migra
-						inner join segu.tusuario usu1 on usu1.id_usuario = migra.id_usuario_reg
+						left join segu.tusuario usu1 on usu1.id_usuario = migra.id_usuario_reg
 						left join segu.tusuario usu2 on usu2.id_usuario = migra.id_usuario_mod
 				        where  ';
 
@@ -103,7 +103,7 @@ BEGIN
 			--Sentencia de la consulta de conteo de registros
 			v_consulta:='select count(migra.id_migracion)
 					    from sqlserver.tmigracion migra
-					    inner join segu.tusuario usu1 on usu1.id_usuario = migra.id_usuario_reg
+					    left join segu.tusuario usu1 on usu1.id_usuario = migra.id_usuario_reg
 						left join segu.tusuario usu2 on usu2.id_usuario = migra.id_usuario_mod
 					    where ';
 
@@ -146,8 +146,8 @@ BEGIN
 						from sqlserver.tmigracion migra
 						left join segu.tusuario usu1 on usu1.id_usuario = migra.id_usuario_reg
 						left join segu.tusuario usu2 on usu2.id_usuario = migra.id_usuario_mod
-				        where  migra.estado = ''pendiente'';';
-
+				    where  migra.estado = ''pendiente''
+            order by migra.id_migracion asc';
 
 			raise notice 'v_consulta: %', v_consulta;
 			--Devuelve la respuesta

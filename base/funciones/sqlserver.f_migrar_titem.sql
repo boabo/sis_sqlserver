@@ -20,7 +20,7 @@ BEGIN
     select tu.id_usuario
     into v_id_usuario
     from segu.tusuario tu
-    where tu.cuenta = (string_to_array(current_user,'_'))[3];
+    where tu.cuenta = (string_to_array(current_user,'_'))[2];
 
 
     v_cadena = string_to_array(trim(new.nombre), '');

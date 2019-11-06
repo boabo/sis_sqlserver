@@ -63,6 +63,7 @@ class MODMigracion extends MODbase{
         $this->setParametro('id_presupuesto_origen','id_presupuesto_origen','int4');
         $this->setParametro('id_auxiliar_destino','id_auxiliar_destino','int4');
         $this->setParametro('consulta','consulta','text');
+        $this->setParametro('id_usuario_reg','id_usuario_reg','integer');
 
         //Ejecuta la instruccion
         $this->armarConsulta();
@@ -89,6 +90,7 @@ class MODMigracion extends MODbase{
         $this->setParametro('id_presupuesto_origen','id_presupuesto_origen','int4');
         $this->setParametro('id_auxiliar_destino','id_auxiliar_destino','int4');
         $this->setParametro('consulta','consulta','text');
+        $this->setParametro('id_usuario_reg','id_usuario_reg','integer');
 
         //Ejecuta la instruccion
         $this->armarConsulta();

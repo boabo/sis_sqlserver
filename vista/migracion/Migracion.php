@@ -9,22 +9,69 @@
 
 header("content-type: text/javascript; charset=UTF-8");
 ?>
+<style type="text/css" rel="stylesheet">
+    .x-selectable,
+    .x-selectable * {
+        -moz-user-select: text !important;
+        -khtml-user-select: text !important;
+        -webkit-user-select: text !important;
+    }
+
+    .x-grid-row td,
+    .x-grid-summary-row td,
+    .x-grid-cell-text,
+    .x-grid-hd-text,
+    .x-grid-hd,
+    .x-grid-row,
+
+    .x-grid-row,
+    .x-grid-cell,
+    .x-unselectable
+    {
+        -moz-user-select: text !important;
+        -khtml-user-select: text !important;
+        -webkit-user-select: text !important;
+    }
+</style>
 <script>
     Phx.vista.Migracion=Ext.extend(Phx.gridInterfaz,{
-
+        identificador:undefined,
+        viewConfig: {
+            stripeRows: false,
+            getRowClass: function(record) {
+                return "x-selectable";
+            }
+        },
         constructor:function(config){
             this.maestro=config.maestro;
             this.tbarItems = ['-','Rep. x Dia: ',
                 this.filCmp,'-'
-
             ];
+
             //llama al constructor de la clase padre
             Phx.vista.Migracion.superclass.constructor.call(this,config);
+            var that = this;
+            Ext.Ajax.request({
+                url:'../../sis_reclamo/control/Reclamo/getDatosOficina',
+                params:{id_usuario:0},
+                success:function(resp){
+                    var reg =  Ext.decode(Ext.util.Format.trim(resp.responseText));
+                    that.identificador = reg.ROOT.datos.id_funcionario;
+                    console.log('id',that.identificador);
+                },
+                failure: this.conexionFailure,
+                timeout:this.timeout,
+                scope:this
+            });
+            /*if (this.identificador == 2134) {
+                this.getBoton('bedit').setVisible(true);
+            }*/
+
             this.init();
-            this.addLoad();
+            /*this.addLoad();
             this.filCmp.on('select', function () {
                 this.addLoad();
-            },this);
+            },this);*/
 
             this.addButton('migrar_fotos',{
                 grupo: [0,1,2,3,4,5],
@@ -90,12 +137,58 @@ header("content-type: text/javascript; charset=UTF-8");
             },
             {
                 config:{
+                    name: 'id_usuario_reg',
+                    fieldLabel: 'Usuario Reg.',
+                    allowBlank: true,
+                    emptyText:'Usuario...',
+                    msgTarget: 'side',
+                    store:new Ext.data.JsonStore(
+                        {
+                            url: '../../sis_seguridad/control/Usuario/listarUsuario',
+                            id: 'id_usuario',
+                            root: 'datos',
+                            sortInfo:{
+                                field: 'cuenta',
+                                direction: 'ASC'
+                            },
+                            totalProperty: 'total',
+                            fields: ['id_usuario','cuenta','fecha_caducidad','descripcion','desc_person'],
+                            // turn on remote sorting
+                            remoteSort: true,
+                            baseParams: {par_filtro: 'USUARI.cuenta#PERSON.nombre_completo2'}
+
+                        }),
+                    valueField: 'id_usuario',
+                    displayField: 'cuenta',
+                    gdisplayField:'usr_reg',
+                    hiddenName: 'id_usuario_reg',
+                    triggerAction: 'all',
+                    lazyRender:true,
+                    mode:'remote',
+                    pageSize:10,
+                    queryDelay:500,
+                    anchor:"80%",
+                    gwidth:150,
+                    renderer: function (value, p, record) {
+                        return String.format('{0}', record.data['usr_reg']);
+                    }
+                },
+                type:'ComboBox',
+                filters:{pfiltro:'migra.id_usuario_reg',type:'numeric'},
+                id_grupo:1,
+                grid:false,
+                form:true
+            },
+
+            {
+                config:{
                     name: 'operacion',
                     fieldLabel: 'Operacion',
                     allowBlank: true,
                     anchor: '80%',
                     gwidth: 65,
                     maxLength:15,
+                    disabled : true,
                     renderer: function (value, p, record) {
                         var color = '';
                         if(record.data['estado']=='pendiente')
@@ -118,7 +211,7 @@ header("content-type: text/javascript; charset=UTF-8");
                     allowBlank: false,
                     anchor: '80%',
                     gwidth: 400,
-                    maxLength:-5/*,
+                    maxLength:Number.MAX_VALUE/*,
 				renderer: function (value, p, record) {
 
 					for()
@@ -131,11 +224,12 @@ header("content-type: text/javascript; charset=UTF-8");
 					return '<tpl for="."><div class="x-combo-list-item" style="width: 15px;"><p><b>Consulta: </b> '+record.data['consulta']+'</p></div></tpl>';
 				}*/
                 },
-                type:'TextField',
+                type:'TextArea',
                 filters:{pfiltro:'migra.consulta',type:'string'},
                 id_grupo:1,
                 grid:true,
-                form:true
+                form:true,
+                egrid:true
             },
             {
                 config:{
@@ -145,6 +239,14 @@ header("content-type: text/javascript; charset=UTF-8");
                     anchor: '80%',
                     gwidth: 60,
                     maxLength:20,
+
+                    store: ['exito','pendiente'],
+                    typeAhead: true,
+                    triggerAction: 'all',
+                    lazyRender:true,
+                    mode: 'local',
+                    width: '80%',
+                    msgTarget: 'side',
                     renderer: function (value, p, record) {
                         var color = '';
                         if(record.data['estado']=='pendiente')
@@ -154,8 +256,11 @@ header("content-type: text/javascript; charset=UTF-8");
                         return String.format('<span style="color: '+color+';">{0}</span>', value);
                     }
                 },
-                type:'TextField',
-                filters:{pfiltro:'migra.estado',type:'string'},
+                type:'ComboBox',
+                filters:{
+                    type: 'list',
+                    options: ['oficial','funcional'],
+                },
                 id_grupo:1,
                 grid:true,
                 form:true
@@ -165,6 +270,7 @@ header("content-type: text/javascript; charset=UTF-8");
                     name: 'respuesta',
                     fieldLabel: 'Respuesta',
                     allowBlank: true,
+                    disabled : true,
                     anchor: '80%',
                     gwidth: 250,
                     maxLength:-5
@@ -187,8 +293,8 @@ header("content-type: text/javascript; charset=UTF-8");
                 type:'TextField',
                 filters:{pfiltro:'migra.cadena_db',type:'string'},
                 id_grupo:1,
-                grid:true,
-                form:true
+                grid:false,
+                form:false
             },
             {
                 config:{
@@ -236,6 +342,7 @@ header("content-type: text/javascript; charset=UTF-8");
                 grid:true,
                 form:false
             },
+
             {
                 config:{
                     name: 'usuario_ai',
@@ -329,14 +436,13 @@ header("content-type: text/javascript; charset=UTF-8");
         ],
         sortInfo:{
             field: 'id_migracion',
-            direction: 'ASC'
+            direction: 'DESC'
         },
-        bdel:false,
+        bdel: true, //this.identificador == 2134?true:false,
         bsave:false,
         bnew:false,
-        bedit:false,
-        btest:false
+        bedit: true, //this.identificador == 2134?true:false,
+        btest:false,
+        fheight: "60%"
     });
 </script>
-
-		

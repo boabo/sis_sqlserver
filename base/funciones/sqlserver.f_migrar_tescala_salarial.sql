@@ -13,7 +13,9 @@ BEGIN
 	select tu.id_usuario
     into v_id_usuario
     from segu.tusuario tu
-    where tu.cuenta = (string_to_array(current_user,'_'))[3];
+    where tu.cuenta = (string_to_array(current_user,'_'))[2];
+
+    v_id_usuario = coalesce(v_id_usuario, 636);
 
     SELECT tf.id_funcionario
     INTO v_id_funcionario

@@ -14,7 +14,7 @@ DECLARE
   v_corriente		varchar;
   v_lugar_nac		varchar;
   v_cadena_db		varchar;
-  v_band_func		integer;
+  v_band_func		integer=0;
 BEGIN
 
     v_cadena_db = pxp.f_get_variable_global('cadena_db_sql_2');
@@ -27,16 +27,13 @@ BEGIN
     from segu.tpersona tp
     left join param.tlugar tl on tl.id_lugar = tp.id_lugar
     where tp.id_persona = new.id_persona;*/
-
+    select count(tuo.id_uo_funcionario)
+    into v_band_func
+    from orga.tuo_funcionario tuo
+    where tuo.id_funcionario = new.id_funcionario and tuo.estado_reg = 'activo';
     if(TG_OP = 'INSERT')then
-
-    	select count(tuo.id_uo_funcionario)
-        into v_band_func
-        from orga.tuo_funcionario tuo
-        where tuo.id_funcionario = new.id_funcionario;
-        --RAISE EXCEPTION 'FALLA: %, %', v_band_func, new.id_funcionario;
     	if(v_band_func = 1)	then
-          --raise exception 'falla';
+
           select tf.id_biometrico, tf.codigo, tf.id_persona, tf.id_funcionario, tf.estado_reg, tf.fecha_ingreso, tf.email_empresa
           into v_record_emp
           from orga.tfuncionario tf
@@ -52,10 +49,14 @@ BEGIN
           left join param.tlugar tl on tl.id_lugar = tp.id_lugar
           where tp.id_persona = v_record_emp.id_persona;
 
-          select tc.id_oficina
+          select coalesce(tc.id_oficina,-1) as id_oficina, tc.codigo, tc.nombre
           into v_record_ofi
           from orga.tcargo tc
           where tc.id_cargo = new.id_cargo;
+
+          if v_record_ofi.id_oficina = -1 then
+            RAISE 'Estimado Usuario: El item (%) % que esta intentando asignar, no tiene su oficina parametrizada.', v_record_ofi.codigo,v_record_ofi.nombre;
+		      end if;
 
               v_consulta =  'exec EMPLEADO_INS '||coalesce(''''||v_record_emp.codigo||'''','''')||', '||coalesce(''''||v_record_per.nombre||'''','''')||', '
               ||coalesce(''''||v_record_per.apellido_paterno||'''','''')||', '||coalesce(''''||v_record_per.apellido_materno||'''','''')||', '
@@ -67,13 +68,13 @@ BEGIN
               ||coalesce(''''||v_record_per.telefono1||'''','''')||', '
               ||coalesce(''''||v_record_per.telefono2||'''','''')||', '||coalesce(''''||v_record_per.celular1||'''','''')||', '
               ||coalesce(''''||v_record_per.celular2||'''','''')||', '||coalesce(''''||v_record_per.correo||'''','''')||', '
-              ||coalesce(''''||v_record_emp.email_empresa||'''','''')||', '''', '''', '''', '
+              ||coalesce(''''||v_record_emp.email_empresa||'''','''''')||', '''', '''', '''', '
               ||coalesce(''''||v_record_per.discapacitado||'''','''')||', '||coalesce(''''||v_record_per.carnet_discapacitado||'''','''')||', '
               ||v_record_ofi.id_oficina||', '||v_record_emp.id_biometrico||';';
 
     	end if;
 
-    elsif(TG_OP ='UPDATE' )then
+    /*elsif(TG_OP ='UPDATE' )then
     	if(new.estado_reg = 'inactivo')then
 
     		v_consulta =  'exec Ende_Funcionario ''DEL'', '''||new.estado_reg||''' null, null, null,
@@ -98,32 +99,33 @@ BEGIN
             coalesce(''''||v_record_emp.direccion||'''','null')||', '||coalesce(''''||v_record_emp.lugar_nac||'''','null')||', '||new.id_funcionario||', '''||
             coalesce(v_record_emp.discapacitado,'')||''', '||coalesce(''''||v_record_emp.carnet_discapacitado||'''','null')||';';
 
-        end if;
+        end if;*/
 	end if;
 
+  if(TG_OP = 'INSERT' and v_band_func = 1)then
 
   	select tu.id_usuario
     into v_id_usuario
     from segu.tusuario tu
-    where tu.cuenta = (string_to_array(current_user,'_'))[3];
-
-	INSERT INTO sqlserver.tmigracion
-    (	id_usuario_reg,
-    	consulta,
-      	estado,
-      	respuesta,
-        operacion,
-        cadena_db
-    )
-    VALUES (
-    	v_id_usuario,
-    	v_consulta,
-      	'pendiente',
-      	null,
-        TG_OP::varchar,
-        v_cadena_db
-    );
-
+    where tu.cuenta = (string_to_array(current_user,'_'))[2];
+    
+    INSERT INTO sqlserver.tmigracion
+      (	id_usuario_reg,
+        consulta,
+          estado,
+          respuesta,
+          operacion,
+          cadena_db
+      )
+      VALUES (
+        v_id_usuario,
+        v_consulta,
+          'pendiente',
+          null,
+          TG_OP::varchar,
+          v_cadena_db
+      );
+  end if;
 RETURN NULL;
 
 END;

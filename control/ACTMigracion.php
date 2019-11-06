@@ -12,7 +12,7 @@ class ACTMigracion extends ACTbase{
     function listarMigracion(){
         $this->objParam->defecto('ordenacion','id_migracion');
 
-        $this->objParam->defecto('dir_ordenacion','asc');
+        $this->objParam->defecto('dir_ordenacion','desc');
 
         if($this->objParam->getParametro('dia_reg')!=''){
             $this->objParam->addFiltro("migra.fecha_reg::date = ''".$this->objParam->getParametro('dia_reg')."''::date");

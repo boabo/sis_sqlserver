@@ -20,7 +20,7 @@ BEGIN
     elsif(TG_OP ='UPDATE' )then
     	if new.estado_reg = 'inactivo' then
         	v_consulta =  'exec Ende_CuentaBancaria ''DEL'', '||new.id_funcionario_cuenta_bancaria||', '||new.id_funcionario||', '||
-        			  new.nro_cuenta||', ''activo'';';
+        			  new.nro_cuenta||', ''inactivo'';';
         else
     		v_consulta =  'exec Ende_CuentaBancaria ''UPD'', '||new.id_funcionario_cuenta_bancaria||', '||new.id_funcionario||', '||
         			  new.nro_cuenta||', ''activo'';';

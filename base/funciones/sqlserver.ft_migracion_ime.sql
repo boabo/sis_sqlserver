@@ -114,19 +114,16 @@ BEGIN
 		begin
 			--Sentencia de la modificacion
 			update sqlserver.tmigracion set
-            cadena_db = v_parametros.cadena_db,
+      --cadena_db = v_parametros.cadena_db,
 			operacion = v_parametros.operacion,
 			estado = v_parametros.estado,
 			respuesta = v_parametros.respuesta,
-			id_presupuesto_destino = v_parametros.id_presupuesto_destino,
-			tipo_cuenta = v_parametros.tipo_cuenta,
-			id_presupuesto_origen = v_parametros.id_presupuesto_origen,
-			id_auxiliar_destino = v_parametros.id_auxiliar_destino,
 			consulta = v_parametros.consulta,
-			id_usuario_mod = p_id_usuario,
-			fecha_mod = now(),
+			--id_usuario_mod = p_id_usuario,
+			--fecha_mod = now(),
 			id_usuario_ai = v_parametros._id_usuario_ai,
-			usuario_ai = v_parametros._nombre_usuario_ai
+			usuario_ai = v_parametros._nombre_usuario_ai,
+      id_usuario_reg = v_parametros.id_usuario_reg
 			where id_migracion=v_parametros.id_migracion;
 
 			--Definicion de la respuesta
