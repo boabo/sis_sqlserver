@@ -7,35 +7,35 @@ ALTER TABLE sqlserver.tcabecera_viatico
     ON DELETE NO ACTION
     ON UPDATE NO ACTION
     NOT DEFERRABLE;
-    
+
 ALTER TABLE sqlserver.tcabecera_viatico
   ADD CONSTRAINT fk_tcabecera_viatico__id_int_comprobante FOREIGN KEY (id_int_comprobante)
     REFERENCES conta.tint_comprobante(id_int_comprobante)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION
     NOT DEFERRABLE;
-    
+
 ALTER TABLE sqlserver.tdetalle_viatico
   ADD CONSTRAINT fk_tdetalle_viatico__id_cabecera_viatico FOREIGN KEY (id_cabecera_viatico)
     REFERENCES sqlserver.tcabecera_viatico(id_cabecera_viatico)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION
     NOT DEFERRABLE;
-    
+
  ALTER TABLE sqlserver.tdetalle_viatico
   ADD CONSTRAINT fk_tdetalle_viatico__id_uo FOREIGN KEY (id_uo)
     REFERENCES orga.tuo(id_uo)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION
     NOT DEFERRABLE;
-    
+
   ALTER TABLE sqlserver.tdetalle_viatico
   ADD CONSTRAINT fk_tdetalle_viatico__id_centro_costo FOREIGN KEY (id_centro_costo)
     REFERENCES param.tcentro_costo(id_centro_costo)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION
     NOT DEFERRABLE;
-    
+
 
 CREATE OR REPLACE VIEW sqlserver.vcabecera_viatico(
     id_cabecera_viatico,
@@ -74,7 +74,7 @@ AS
          ) AS id_centro_costo_depto
   FROM sqlserver.tcabecera_viatico cv
        JOIN param.tdepto d ON d.codigo::text = 'CON'::text;
-       
+
 CREATE OR REPLACE VIEW sqlserver.vdetalle_viatico_credito(
     id_detalle_viatico,
     id_cabecera_viatico,
@@ -169,7 +169,7 @@ AS
                                                        ps_id_centro_costo,
                                                        ps_nombre_tipo_relacion)
          )
-           ELSE 
+           ELSE
          (
            SELECT a.id_auxiliar
            FROM conta.tauxiliar a
@@ -258,7 +258,7 @@ AS
          cc.id_centro_costo AND presup.tipo_pres::text = '2'::text
   WHERE dv.tipo_transaccion::text = 'debito'::text AND
         presup.id_presupuesto = cc.id_centro_costo;
-    
+
 
 
 /************************************F-DEP-JRR-SQLSERVER-0-13/05/2016*************************************************/
@@ -736,3 +736,101 @@ WHERE dv.tipo_transaccion::text = 'debito'::text;
 
 
 /************************************F-DEP-JRR-SQLSERVER-0-03/08/2017*************************************************/
+
+
+/************************************I-DEP-IRVA-SQLSERVER-0-05/12/2019*************************************************/
+CREATE OR REPLACE VIEW sqlserver.vdetalle_viatico_credito (
+    id_detalle_viatico,
+    id_cabecera_viatico,
+    monto,
+    id_presupuesto,
+    id_cuenta,
+    id_auxiliar,
+    id_partida,
+    forma_pago,
+    acreedor,
+    glosa)
+AS
+SELECT dv.id_detalle_viatico,
+    cv.id_cabecera_viatico,
+    dv.monto,
+        CASE
+            WHEN dv.tipo_credito::text = 'viatico'::text THEN
+                sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo, cv.id_gestion_contable)
+            ELSE cv.id_centro_costo_depto
+        END AS id_presupuesto,
+    (
+    SELECT f_get_config_relacion_contable.ps_id_cuenta
+    FROM conta.f_get_config_relacion_contable(sqlserver.f_get_codigo_relacion(dv.tipo_credito,
+        cv.tipo_viatico), cv.id_gestion_contable, sqlserver.f_get_concepto(dv.tipo_credito, dv.tipo_viaje, cv.tipo_viatico, COALESCE(dv.codigo_auxiliar, dv.id_uo::character varying), cv.id_gestion_contable::character varying), sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo, cv.id_gestion_contable)) f_get_config_relacion_contable(ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo, ps_nombre_tipo_relacion)
+    ) AS id_cuenta,
+    (
+    SELECT f_get_config_relacion_contable.ps_id_auxiliar
+    FROM conta.f_get_config_relacion_contable(sqlserver.f_get_codigo_relacion(dv.tipo_credito,
+        cv.tipo_viatico), cv.id_gestion_contable, sqlserver.f_get_concepto(dv.tipo_credito, dv.tipo_viaje, cv.tipo_viatico, COALESCE(dv.codigo_auxiliar, dv.id_uo::character varying), cv.id_gestion_contable::character varying), sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo, cv.id_gestion_contable)) f_get_config_relacion_contable(ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo, ps_nombre_tipo_relacion)
+    ) AS id_auxiliar,
+    (
+    SELECT f_get_config_relacion_contable.ps_id_partida
+    FROM conta.f_get_config_relacion_contable(sqlserver.f_get_codigo_relacion(dv.tipo_credito,
+        cv.tipo_viatico), cv.id_gestion_contable, sqlserver.f_get_concepto(dv.tipo_credito, dv.tipo_viaje, cv.tipo_viatico, COALESCE(dv.codigo_auxiliar, dv.id_uo::character varying), cv.id_gestion_contable::character varying), sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo, cv.id_gestion_contable)) f_get_config_relacion_contable(ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo, ps_nombre_tipo_relacion)
+    ) AS id_partida,
+    dv.forma_pago,
+    dv.acreedor,
+    dv.glosa
+FROM sqlserver.tdetalle_viatico dv
+     JOIN sqlserver.vcabecera_viatico cv ON cv.id_cabecera_viatico =
+         dv.id_cabecera_viatico
+WHERE dv.tipo_transaccion::text = 'credito'::text;
+
+ALTER VIEW sqlserver.vdetalle_viatico_credito
+  OWNER TO postgres;
+
+
+
+CREATE OR REPLACE VIEW sqlserver.vdetalle_viatico_debito (
+      id_detalle_viatico,
+      id_cabecera_viatico,
+      monto,
+      id_presupuesto,
+      id_cuenta,
+      id_auxiliar,
+      id_partida,
+      forma_pago,
+      acreedor,
+      glosa)
+  AS
+  SELECT dv.id_detalle_viatico,
+      cv.id_cabecera_viatico,
+      dv.monto,
+          CASE
+              WHEN dv.tipo_credito::text = 'viatico'::text THEN
+                  sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo, cv.id_gestion_contable)
+              ELSE cv.id_centro_costo_depto
+          END AS id_presupuesto,
+      (
+      SELECT f_get_config_relacion_contable.ps_id_cuenta
+      FROM conta.f_get_config_relacion_contable(sqlserver.f_get_codigo_relacion(dv.tipo_credito,
+          cv.tipo_viatico), cv.id_gestion_contable, sqlserver.f_get_concepto(dv.tipo_credito, dv.tipo_viaje, cv.tipo_viatico, COALESCE(dv.codigo_auxiliar, dv.id_uo::character varying), cv.id_gestion_contable::character varying), sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo, cv.id_gestion_contable)) f_get_config_relacion_contable(ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo, ps_nombre_tipo_relacion)
+      ) AS id_cuenta,
+      (
+      SELECT f_get_config_relacion_contable.ps_id_auxiliar
+      FROM conta.f_get_config_relacion_contable(sqlserver.f_get_codigo_relacion(dv.tipo_credito,
+          cv.tipo_viatico), cv.id_gestion_contable, sqlserver.f_get_concepto(dv.tipo_credito, dv.tipo_viaje, cv.tipo_viatico, COALESCE(dv.codigo_auxiliar, dv.id_uo::character varying), cv.id_gestion_contable::character varying), sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo, cv.id_gestion_contable)) f_get_config_relacion_contable(ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo, ps_nombre_tipo_relacion)
+      ) AS id_auxiliar,
+      (
+      SELECT f_get_config_relacion_contable.ps_id_partida
+      FROM conta.f_get_config_relacion_contable(sqlserver.f_get_codigo_relacion(dv.tipo_credito,
+          cv.tipo_viatico), cv.id_gestion_contable, sqlserver.f_get_concepto(dv.tipo_credito, dv.tipo_viaje, cv.tipo_viatico, COALESCE(dv.codigo_auxiliar, dv.id_uo::character varying), cv.id_gestion_contable::character varying), sqlserver.f_get_pres(dv.tipo_credito, dv.id_centro_costo, dv.id_uo, cv.id_gestion_contable)) f_get_config_relacion_contable(ps_id_cuenta, ps_id_auxiliar, ps_id_partida, ps_id_centro_costo, ps_nombre_tipo_relacion)
+      ) AS id_partida,
+      dv.forma_pago,
+      dv.acreedor,
+      dv.glosa
+  FROM sqlserver.tdetalle_viatico dv
+       JOIN sqlserver.vcabecera_viatico cv ON cv.id_cabecera_viatico =
+           dv.id_cabecera_viatico
+  WHERE dv.tipo_transaccion::text = 'debito'::text;
+
+  ALTER VIEW sqlserver.vdetalle_viatico_debito
+    OWNER TO postgres;
+
+/************************************F-DEP-IRVA-SQLSERVER-0-05/12/2019*************************************************/
