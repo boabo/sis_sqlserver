@@ -17,13 +17,10 @@ v_contador_int		integer;
 v_existencia_interior	varchar;
 
 
-
 BEGIN
---raise exception 'A: %, B: %, C: %, D: %', p_tipo_credito, p_tipo_viaje, p_tipo_viatico, p_codigo_auxiliar;
-
-
-if (p_codigo_auxiliar is not null and p_codigo_auxiliar <> 'entrenamiento') then
-
+--raise exception 'A: %, B: %, C: %, D: %, E: %', p_tipo_credito, p_tipo_viaje, p_tipo_viatico, p_codigo_auxiliar,p_gestion;
+if (p_codigo_auxiliar != 'entrenamiento' and p_codigo_auxiliar is not null and p_codigo_auxiliar != '') then
+				raise exception 'entra aqui el dato %',p_codigo_auxiliar;
 				/*Verificamos si existe el concepto VIATICOS POR VIAJES AL EXTERIOR DEL PAIS (TRIPULACION EN VUELO) en la gestion*/
                 select 1 into v_contador_ext
                 from param.tconcepto_ingas ing
@@ -56,8 +53,8 @@ if (p_codigo_auxiliar is not null and p_codigo_auxiliar <> 'entrenamiento') then
 
 end if;
 
-
- return (CASE
+--raise exception 'llega aqui dato F: %, G: %, H: %',p_tipo_viaje,p_tipo_viatico,v_existencia_interior;
+return (CASE
   		   WHEN p_tipo_credito != 'viatico' then
 		   	NULL
            WHEN p_tipo_viaje::text = 'nacional'::text AND p_tipo_viatico::text
@@ -82,6 +79,7 @@ end if;
              ::text = 'administrativo'::text THEN 4873 --VIATICOS POR VIAJES AL EXTERIOR DEL PAIS
            ELSE  NULL
            END)::INTEGER;
+
 
 RETURN 0::INTEGER;
 END;
