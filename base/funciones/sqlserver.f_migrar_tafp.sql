@@ -24,7 +24,7 @@ BEGIN
           select tf.id_funcionario, tf.codigo
           into v_record_emp
           from orga.tfuncionario tf
-          where id_funcionario = new.id_funcionario;
+          where id_funcionario = new.id_funcionario::integer;
 
           v_consulta =  'exec Ende_Afp ''DEL'', '''||coalesce(new.id_funcionario_afp,'')||''', '''||coalesce(new.id_funcionario,'')||''', '''||
          			   coalesce(new.id_afp,'')||''', '''||coalesce(new.nro_afp,'')||''', ''activo'' ;';
@@ -67,3 +67,6 @@ VOLATILE
 CALLED ON NULL INPUT
 SECURITY INVOKER
 COST 100;
+
+ALTER FUNCTION sqlserver.f_migrar_tafp ()
+  OWNER TO postgres;

@@ -141,6 +141,7 @@ BEGIN
                 v_id_int_comprobante =   conta.f_gen_comprobante (v_id_cabecera_viatico,'DEVPAGVIA',v_id_estado_wf,v_id_usuario_reg,NULL,NULL, NULL);
             else
                 v_id_int_comprobante =   conta.f_gen_comprobante (v_id_cabecera_viatico,'DEVPAGVIA',NULL,v_id_usuario_reg,NULL,NULL, NULL);
+            	--v_id_int_comprobante = 1;
             end if;
 
 			UPDATE conta.tint_comprobante set
@@ -237,3 +238,6 @@ VOLATILE
 CALLED ON NULL INPUT
 SECURITY INVOKER
 COST 100;
+
+ALTER FUNCTION sqlserver.ft_cabecera_viatico_ime (p_administrador integer, p_id_usuario integer, p_tabla varchar, p_transaccion varchar)
+  OWNER TO postgres;

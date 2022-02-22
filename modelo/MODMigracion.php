@@ -208,7 +208,11 @@ class MODMigracion extends MODbase{
                 }else {
                     if ($data->tipo_conexion  != 'informix'){
                         if ($param_conex[1] == 'msdb') {
-                            @mssql_query(utf8_decode($data->consulta), $conn);
+                            try {
+                                @mssql_query(utf8_decode($data->consulta), $conn);
+                            }catch (Exception $e){
+                                echo ('ERROR1: '.$e->getMessage());
+                            }
                         } else {
 
                             try {
@@ -217,7 +221,11 @@ class MODMigracion extends MODbase{
                                 $link = $cone->conectarpdo();
 
                                 if ($link) {
-                                    $consulta = @mssql_query(utf8_decode($data->consulta), $conn);
+                                    try {
+                                        $consulta = @mssql_query(utf8_decode($data->consulta), $conn);
+                                    }catch (Exception $e){
+                                        echo ('ERROR2: '.$e->getMessage());
+                                    }
                                 }
 
                                 if (!$consulta) {

@@ -14,17 +14,17 @@ BEGIN
     v_cadena_db = pxp.f_get_variable_global('cadena_db_sql_2');
 
     v_gestion = EXTRACT(YEAR FROM current_date);
-    raise exception 'categoria salarial: %',TG_OP;
+    --raise exception 'categoria salarial: %',TG_OP;
     if(TG_OP = 'INSERT')then
-    	v_consulta =  'exec Ende_CategoriaSalarial ''INS'', '||new.id_categoria_salarial||', '''||coalesce(new.nombre,'')||''', '||
+    	v_consulta =  'exec Ende_CategoriaSalarial "INS", '||new.id_categoria_salarial||', "'||coalesce(new.nombre,'')||'", '||
         			  v_gestion||';';
 
     elsif(TG_OP ='UPDATE' )then
     	if new.estado_reg = 'inactivo' then
-    		v_consulta =  'exec Ende_CategoriaSalarial ''DEL'', '||old.id_categoria_salarial||', '''||coalesce(old.nombre,'')||''', '||
+    		v_consulta =  'exec Ende_CategoriaSalarial "DEL", '||old.id_categoria_salarial||', "'||coalesce(old.nombre,'')||'", '||
         			  v_gestion||';';
         else
-        	v_consulta =  'exec Ende_CategoriaSalarial ''UPD'', '||new.id_categoria_salarial||', '''||coalesce(new.nombre,'')||''', '||
+        	v_consulta =  'exec Ende_CategoriaSalarial "UPD", '||new.id_categoria_salarial||', "'||coalesce(new.nombre,'')||'", '||
             		  v_gestion||';';
         end if;
     end if;
@@ -34,6 +34,8 @@ BEGIN
     into v_id_usuario
     from segu.tusuario tu
     where tu.cuenta = (string_to_array(current_user,'_'))[3];
+
+    v_id_usuario = coalesce(v_id_usuario, 397);
 
 	INSERT INTO sqlserver.tmigracion
     (	id_usuario_reg,
@@ -61,3 +63,6 @@ VOLATILE
 CALLED ON NULL INPUT
 SECURITY INVOKER
 COST 100;
+
+ALTER FUNCTION sqlserver.f_migrar_tcategoria_salarial ()
+  OWNER TO postgres;
